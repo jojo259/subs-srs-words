@@ -84,18 +84,19 @@ with open(os.environ['subs_path'], mode='r', encoding='UTF-8') as subs:
 			if word in donewords or word in failedwords:
 				continue
 			ffmpegtimeformat = '%H:%M:%S.%f'
-			wordtimeguess = datetime.strftime(timestart + ((atword + 1) / (len(words) + 1)) * timediff, ffmpegtimeformat)
-			print(wordtimeguess)
+			wordtimeguess = timestart + ((atword + 1) / (len(words) + 1)) * timediff
+			wordtimeguessffmpeg = datetime.strftime(wordtimeguess, ffmpegtimeformat)
+			wordtimeguesspriolevel = datetime.strftime(wordtimeguess, '%H %M %S %f')
 			filetimeformat = '%Hh-%Mm-%Ss'
 			filename = f'{timestart.strftime(filetimeformat)}-{sub[0]}-{str(atword)}-{word}.png'
-			extractFrame(wordtimeguess, 'images/' + filename)
+			extractFrame(wordtimeguessffmpeg, 'images/' + filename)
 			wordmeaning = None
 			try:
 				wordmeaning = chindict._lookup_word(word).meaning
 			except: #chindict.errors.NotFound.WordNotFoundException ?
 				failedwords.append(word)
 				continue
-			csvline = f'{csvProcessField(word)}|{csvProcessField(pinyin.get(word))}|{csvProcessField('; '.join(wordmeaning))}|{csvProcessField(sub[2])}||<img src="{filename}">'
+			csvline = f'{csvProcessField(word)}|{csvProcessField(pinyin.get(word))}|{csvProcessField('; '.join(wordmeaning))}|{csvProcessField(sub[2])}||<img src="{filename}">|{wordtimeguesspriolevel}'
 			with open('words.csv', 'a', encoding="UTF-8") as csvfile:
 				csvfile.write(csvline + '\n')
 			donewords.append(word)
