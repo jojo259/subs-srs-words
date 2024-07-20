@@ -35,6 +35,17 @@ def extractFrame(time, filename):
 def csvProcessField(text):
 	return text.replace('|', '/')
 
+def splitUnknownWords(words):
+	processedwords = []
+	for word in words:
+		try:
+			wordmeaning = chindict._lookup_word(word).meaning
+			processedwords.append(word)
+		except:
+			processedwords.extend(list(word))
+			print(f'split unknown word ' + word + ' into ' + ' and '.join(list(word)))
+	return processedwords
+
 ignoreknownwords = True
 
 chindict = ChinDict()
@@ -65,6 +76,7 @@ with open(os.environ['subs_path'], mode='r', encoding='UTF-8') as subs:
 		print(timediff)
 		words = filterNonChinese(list(jieba.cut(sub[2])))
 		print(words)
+		words = splitUnknownWords(words)
 		for atword, word in enumerate(words):
 			if word in knownwords and ignoreknownwords:
 				continue
