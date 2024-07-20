@@ -30,7 +30,8 @@ def extractFrame(time, filename):
 		'-copyts',
 	]
 
-	subprocess.call(' '.join(command), stdout=subprocess.DEVNULL)
+	command = ' '.join(command) + ' > nul 2>&1'
+	subprocess.call(command, shell=True)
 
 def csvProcessField(text):
 	return text.replace('|', '/')
