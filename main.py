@@ -73,8 +73,8 @@ with open(os.environ['subs_path'], mode='r', encoding='UTF-8') as subs:
 			ffmpegtimeformat = '%H:%M:%S.%f'
 			wordtimeguess = datetime.strftime(timestart + ((atword + 1) / (len(words) + 1)) * timediff, ffmpegtimeformat)
 			print(wordtimeguess)
-			filetimeformat = '%H-%M-%S-%f'
-			filename = f'{timestart.strftime(filetimeformat) + "-" + str(atword) + "-" + word}.png'
+			filetimeformat = '%Hh-%Mm-%Ss'
+			filename = f'{timestart.strftime(filetimeformat)}-{sub[0]}-{str(atword)}-{word}.png'
 			extractFrame(wordtimeguess, 'images/' + filename)
 			wordmeaning = None
 			try:
