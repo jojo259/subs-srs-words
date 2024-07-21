@@ -1,0 +1,5 @@
+Your task is to define this Mandarin Chinese vocabulary item in English.
+Respond with the format: <definition1>; <definition2>;...
+The ideal number of definitions is 3.
+Do not provide more than 12 definitions.
+Do not provide any redundant definitions.

@@ -5,6 +5,8 @@ from datetime import datetime
 import re
 import pinyin
 from chin_dict.chindict import ChinDict
+import openaireq
+import json5
 
 import dotenv
 dotenv.load_dotenv()
@@ -22,7 +24,7 @@ def extractFrame(time, filename):
 		'-ss', time,
 		'-i', os.environ['video_path'],
 		'-compression_level', '100',
-		'-vf', f"subtitles='{os.environ['subs_path']}':force_style='FontSize=40,FontName=\"Noto Sans SC\"',scale=768:432",
+		'-vf', f"\"subtitles='{os.environ['subs_path']}':force_style='FontSize=40,FontName=Noto Sans SC',scale=768:432\"",
 		'-frames:v', '1',
 		'-qscale:v', '0',
 		filename,
@@ -33,7 +35,7 @@ def extractFrame(time, filename):
 	command = ' '.join(command) + ' > nul 2>&1'
 	subprocess.call(command, shell=True)
 
-def csvProcessField(text):
+def csvProcessText(text):
 	return text.replace('|', '/')
 
 def splitUnknownWords(words):
@@ -49,7 +51,8 @@ def splitUnknownWords(words):
 
 ignoreknownwords = True
 
-chindict = ChinDict()
+if os.environ['definewith'] == 'chindict':
+	chindict = ChinDict()
 
 if not os.path.exists('images'):
 	os.makedirs('images')
@@ -63,25 +66,53 @@ with open('knownwords.txt', mode='r', encoding='UTF-8') as knowns:
 
 donewords = []
 failedwords = []
+alrknownwords = []
+alrdonewords = []
 
 with open(os.environ['subs_path'], mode='r', encoding='UTF-8') as subs:
 	subsall = subs.read()
 	subs = list(chunk(subsall.split('\n'), 4))
 	for atsub, sub in enumerate(subs[:-1]):
-		print(sub)
 		timesplit = sub[1].split(' --> ')
 		readtimeformat = '%H:%M:%S,%f'
 		timestart = datetime.strptime(timesplit[0], readtimeformat)
 		timeend = datetime.strptime(timesplit[1], readtimeformat)
 		timediff = timeend - timestart
-		print(timediff)
-		words = filterNonChinese(list(jieba.cut(sub[2])))
-		print(words)
-		words = splitUnknownWords(words)
+		print(f'LINE {sub[2]} at time {timestart}')
+		if os.environ['splitwith'] == 'jieba':
+			words = filterNonChinese(list(jieba.cut(sub[2])))
+			words = splitUnknownWords(words)
+		elif os.environ['splitwith'] == 'ai':
+			tries = -1
+			while True:
+				tries += 1
+				if tries >= 8:
+					print('FAILED ai splitting')
+					words = filterNonChinese(list(jieba.cut(sub[2])))
+					break
+				with open('promptsplit.txt', 'r') as promptFile:
+					messages = [
+						openaireq.constructMessage('system', promptFile.read()),
+						openaireq.constructMessage('user', sub[2])
+					]
+					resp = None
+					while resp == None:
+						print('getting ai split')
+						resp = openaireq.doRequest(messages)
+					print(f'try {tries} response: {resp}')
+					try:
+						words = filterNonChinese(json5.loads(resp)['items'])
+						break
+					except Exception as e:
+						print(e)
+						continue
+					print(words)
 		for atword, word in enumerate(words):
 			if word in knownwords and ignoreknownwords:
+				alrknownwords.append(word)
 				continue
 			if word in donewords or word in failedwords:
+				alrdonewords.append(word)
 				continue
 			ffmpegtimeformat = '%H:%M:%S.%f'
 			wordtimeguess = timestart + ((atword + 1) / (len(words) + 1)) * timediff
@@ -92,15 +123,32 @@ with open(os.environ['subs_path'], mode='r', encoding='UTF-8') as subs:
 			extractFrame(wordtimeguessffmpeg, 'images/' + filename)
 			wordmeaning = None
 			try:
-				wordmeaning = chindict._lookup_word(word).meaning
-			except: #chindict.errors.NotFound.WordNotFoundException ?
+				print(f'defining {word}')
+				if os.environ['definewith'] == 'chindict':
+					wordmeaning = chindict._lookup_word(word).meaning
+					print(f'word success: {word}')
+				elif os.environ['definewith'] == 'ai':
+					with open('promptdefine.txt', 'r') as promptFile:
+						messages = [
+							openaireq.constructMessage('system', promptFile.read()),
+							openaireq.constructMessage('user', word)
+						]
+						resp = openaireq.doRequest(messages)
+						print(f'got definition: {resp}')
+						wordmeaning = resp.split(';')
+			except Exception as e: #chindict.errors.NotFound.WordNotFoundException ?
+				print(e)
+				print(f'word failed: {word}')
 				failedwords.append(word)
 				continue
-			csvline = f'{csvProcessField(word)}|{csvProcessField(pinyin.get(word))}|{csvProcessField('; '.join(wordmeaning))}|{csvProcessField(sub[2])}||<img src="{filename}">|{wordtimeguesspriolevel}'
+			csvline = f"{csvProcessText(word)}|{csvProcessText(pinyin.get(word))}|{csvProcessText('; '.join(wordmeaning))}|{csvProcessText(sub[2])}||<img src=\"{csvProcessText(filename)}\">|{csvProcessText(wordtimeguesspriolevel)}"
 			with open('words.csv', 'a', encoding="UTF-8") as csvfile:
 				csvfile.write(csvline + '\n')
 			donewords.append(word)
-			print(f'done {len(donewords)} words')
+		print(f'finished line with {len(donewords)} done words, {len(alrknownwords)} known words, {len(failedwords)} failed words, and {len(alrdonewords)} already done words,')
 
 with open('loglast.txt', 'w', encoding="UTF-8") as logfile:
-	logfile.write(f'FAILED ({len(failedwords)}): {"\n".join(failedwords)}\nADDED ({len(donewords)}): {"\n".join(donewords)}')
+	logfile.write('FAILED ({}): {}\nADDED ({}): {}'.format(
+	len(failedwords), "\n".join(failedwords),
+	len(donewords), "\n".join(donewords)
+))

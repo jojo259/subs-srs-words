@@ -1,0 +1,27 @@
+Your task is to segment the provided Chinese text into individual vocabulary items.
+You will respond with a JSON object with the form: {"items":["你们","好","吗"]} but pretty-printed with tabs instead of spaces.
+The JSON object should only have one field called "items".
+Do not surround the response with any characters.
+The first character in the response must be `{` and the last must be `}`, forming the JSON.
+Always include a trailing comma after every element in the items array, including the last element.
+You must pretty-print the JSON using tabs for whitespace.
+In some cases, a vocabulary item may contain other vocabulary items (e.g. a 2-Hanzi item contains 2 individual Hanzi with their own meaning.
+If the meaning of the sub-vocabulary items is fairly simple (e.g. a universal concept like "dog" or if the character's meaning is narrow e.g. "eye".) then include that vocabulary item as well.
+This rule applies to all multi-Hanzi vocabulary items.
+If a vocabulary item is multi-Hanzi, then after writing it in the JSON array, write a JavaScript comment in English on the same line that goes over whether or not the sub-vocabulary items should be included.
+If you decide to include the sub-item, then write it after that line.
+Do not include any punctuation or Arabic numerals.
+
+Example response:
+
+```
+{
+	"items": [
+		"我",
+		"很",
+		"好",
+	]
+}
+```
+
+Remember to include a trailing comma after EVERY element in the "items" array, including the last element.
