@@ -1,3 +1,5 @@
+print('init')
+
 import os
 import subprocess
 import jieba
@@ -69,6 +71,8 @@ with open('knownwords.txt', mode='r', encoding='UTF-8') as knowns:
 	else:
 		knownwords = [line for line in lines if line.strip()]
 
+print(f'got {knownwords} known words')
+
 donewords = []
 failedwords = []
 alrknownwords = []
@@ -86,6 +90,8 @@ with open(os.environ['subs_path'], 'rb') as f:
 
 if not subs_file_encoding:
 	raise Exception('no subs file encoding')
+
+print('starting')
 
 with open(os.environ['subs_path'], mode='r', encoding=subs_file_encoding) as subs:
 	subsall = subs.read()
