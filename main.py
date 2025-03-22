@@ -7,6 +7,7 @@ import pinyin
 from chin_dict.chindict import ChinDict
 import openaireq
 import json5
+import cchardet
 
 import dotenv
 dotenv.load_dotenv()
@@ -69,7 +70,20 @@ failedwords = []
 alrknownwords = []
 alrdonewords = []
 
-with open(os.environ['subs_path'], mode='r', encoding='UTF-8') as subs:
+subs_file_encoding = None
+
+print('checking subs file encoding')
+
+with open(os.environ['subs_path'], 'rb') as f:
+	raw = f.read(1000000)
+	detected = cchardet.detect(raw)
+	subs_file_encoding = detected['encoding']
+	print(f'subs file encoding: {subs_file_encoding}')
+
+if not subs_file_encoding:
+	raise Exception('no subs file encoding')
+
+with open(os.environ['subs_path'], mode='r', encoding=subs_file_encoding) as subs:
 	subsall = subs.read()
 	subs = list(chunk(subsall.split('\n'), 4))
 	for atsub, sub in enumerate(subs[:-1]):
