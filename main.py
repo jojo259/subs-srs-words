@@ -162,8 +162,14 @@ with open(os.environ['subs_path'], mode='r', encoding=subs_file_encoding) as sub
 				print(f'word failed: {word}')
 				failedwords.append(word)
 				continue
-			csvline = f"{csvProcessText(word)}|{csvProcessText(pinyin.get(word))}|{csvProcessText('; '.join(wordmeaning))}|{csvProcessText(sub[2])}||<img src=\"{csvProcessText(filename)}\">|{csvProcessText(wordtimeguesspriolevel)}"
+			csv_word = csvProcessText(word)
+			csv_pinyin = csvProcessText(pinyin.get(word))
+			print(f'meaning: {wordmeaning}')
+			csv_meaning = csvProcessText('; '.join(wordmeaning))
+			csv_example_sentence = csvProcessText(sub[2])
+			csv_file_name = csvProcessText(filename)
 			extractFrame(wordtimeguessffmpeg, 'images/' + filename)
+			csvline = f"{csv_word}|{csv_pinyin}|{csv_meaning}|{csv_example_sentence}||<img src=\"{csv_file_name}\">|{csvProcessText(wordtimeguesspriolevel)}"
 			with open('words.csv', 'a', encoding="UTF-8") as csvfile:
 				csvfile.write(csvline + '\n')
 			donewords.append(word)
