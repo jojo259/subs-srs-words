@@ -63,7 +63,11 @@ with open('words.csv', 'w', encoding="UTF-8") as csvfile:
 
 knownwords = []
 with open('knownwords.txt', mode='r', encoding='UTF-8') as knowns:
-	knownwords = knowns.read().splitlines()
+	lines = knowns.read().splitlines()
+	if lines and '	' in lines[3]:
+		knownwords = [line.split('\t')[0] for line in lines if line.strip()]
+	else:
+		knownwords = [line for line in lines if line.strip()]
 
 donewords = []
 failedwords = []
