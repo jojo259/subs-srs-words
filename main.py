@@ -138,7 +138,6 @@ with open(os.environ['subs_path'], mode='r', encoding=subs_file_encoding) as sub
 			wordtimeguesspriolevel = datetime.strftime(wordtimeguess, '%H %M %S %f')
 			filetimeformat = '%Hh-%Mm-%Ss'
 			filename = f'{timestart.strftime(filetimeformat)}-{sub[0]}-{str(atword)}-{word}.png'
-			extractFrame(wordtimeguessffmpeg, 'images/' + filename)
 			wordmeaning = None
 			try:
 				print(f'defining {word}')
@@ -160,6 +159,7 @@ with open(os.environ['subs_path'], mode='r', encoding=subs_file_encoding) as sub
 				failedwords.append(word)
 				continue
 			csvline = f"{csvProcessText(word)}|{csvProcessText(pinyin.get(word))}|{csvProcessText('; '.join(wordmeaning))}|{csvProcessText(sub[2])}||<img src=\"{csvProcessText(filename)}\">|{csvProcessText(wordtimeguesspriolevel)}"
+			extractFrame(wordtimeguessffmpeg, 'images/' + filename)
 			with open('words.csv', 'a', encoding="UTF-8") as csvfile:
 				csvfile.write(csvline + '\n')
 			donewords.append(word)
