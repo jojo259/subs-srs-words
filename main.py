@@ -144,6 +144,8 @@ with open(os.environ['subs_path'], mode='r', encoding=subs_file_encoding) as sub
 				if os.environ['definewith'] == 'chindict':
 					wordmeaning = chindict._lookup_word(word).meaning
 					print(f'word success: {word}')
+					if not wordmeaning:
+						raise Exception('word meaning is none')
 				elif os.environ['definewith'] == 'ai':
 					with open('promptdefine.txt', 'r') as promptFile:
 						messages = [
@@ -153,6 +155,8 @@ with open(os.environ['subs_path'], mode='r', encoding=subs_file_encoding) as sub
 						resp = openaireq.doRequest(messages)
 						print(f'got definition: {resp}')
 						wordmeaning = resp.split(';')
+						if not wordmeaning:
+							raise Exception('word meaning is none')
 			except Exception as e: #chindict.errors.NotFound.WordNotFoundException ?
 				print(e)
 				print(f'word failed: {word}')
