@@ -95,14 +95,29 @@ print('starting')
 
 with open(os.environ['subs_path'], mode='r', encoding=subs_file_encoding) as subs:
 	subsall = subs.read()
-	subs = list(chunk(subsall.split('\n'), 4))
-	for atsub, sub in enumerate(subs[:-1]):
+	subs_lines = subsall.split('\n')
+	blocks = []
+	current_block = []
+	for line in subs_lines:
+		if line.strip() == '':
+			if current_block:
+				blocks.append(current_block)
+				current_block = []
+		else:
+			current_block.append(line)
+		if current_block:
+			blocks.append(current_block)
+	print(f'got {len(blocks)} blocks')
+	for i in blocks[:5]:
+		print(i)
+	for atsub, sub in enumerate(blocks[:-1]):
 		timesplit = sub[1].split(' --> ')
 		readtimeformat = '%H:%M:%S,%f'
 		timestart = datetime.strptime(timesplit[0], readtimeformat)
 		timeend = datetime.strptime(timesplit[1], readtimeformat)
 		timediff = timeend - timestart
-		print(f'LINE {sub[2]} at time {timestart}')
+		text = '\n'.join(sub[2:])
+		print(f'LINE {text} at time {timestart}')
 		if os.environ['splitwith'] == 'jieba':
 			words = filterNonChinese(list(jieba.cut(sub[2])))
 			words = splitUnknownWords(words)
